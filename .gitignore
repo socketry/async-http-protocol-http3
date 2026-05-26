@@ -1,0 +1,5 @@
+/.covered.db
+/.bundle/
+/gems.locked
+/pkg/
+/vendor/

@@ -1,0 +1,31 @@
+plugins:
+  - rubocop-md
+  - rubocop-socketry
+
+AllCops:
+  DisabledByDefault: true
+  SuggestExtensions: false
+
+# Socketry specific rules:
+
+Layout/ConsistentBlankLineIndentation:
+  Enabled: true
+
+Layout/BlockDelimiterSpacing:
+  Enabled: true
+
+Style/GlobalExceptionVariables:
+  Enabled: true
+
+# General Layout rules:
+
+Layout/IndentationStyle:
+  Enabled: true
+  EnforcedStyle: tabs
+
+Layout/InitialIndentation:
+  Enabled: true
+
+Layout/IndentationWidth:
+  Enabled: true
+  Width: 1
