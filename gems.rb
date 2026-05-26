@@ -7,8 +7,13 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "async-http", path: "../async-http"
-gem "protocol-http3", path: "../protocol-http3"
+if File.directory?("../async-http")
+	gem "async-http", path: "../async-http"
+end
+
+if File.directory?("../protocol-http3")
+	gem "protocol-http3", path: "../protocol-http3"
+end
 
 group :maintenance, optional: true do
 	gem "bake-gem"
