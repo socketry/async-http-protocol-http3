@@ -17,8 +17,6 @@ else
 	gem "protocol-http3", github: "socketry/protocol-http3"
 end
 
-gem "protocol-quic", github: "socketry/protocol-quic"
-
 group :maintenance, optional: true do
 	gem "bake-gem"
 	gem "bake-modernize"
@@ -33,6 +31,7 @@ group :test do
 	gem "sus"
 	gem "sus-fixtures-async"
 	gem "covered"
+	gem "localhost"
 	
 	gem "rubocop"
 	gem "rubocop-md"
