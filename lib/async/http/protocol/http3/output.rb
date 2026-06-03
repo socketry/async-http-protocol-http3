@@ -25,6 +25,11 @@ module Async
 						@task = parent.async(&self.method(:run))
 					end
 					
+					# Wait for the output task to finish.
+					def wait
+						@task&.wait
+					end
+					
 					# Stop the output task.
 					def stop(error = nil)
 						if task = @task

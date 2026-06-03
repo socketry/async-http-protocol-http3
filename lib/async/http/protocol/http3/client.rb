@@ -114,7 +114,6 @@ module Async
 						unless @started
 							@started = true
 							
-							connect
 							send_packets
 							start_connection(@socket)
 						end
@@ -130,27 +129,31 @@ module Async
 					end
 					
 					def request_headers(request)
-						pseudo_headers = [
-							[SCHEME, request.scheme || HTTPS],
-							[METHOD, request.method],
+						# The native HTTP/3 binding expects a flat Array of
+						# [name, value] String pairs, so we build one explicitly
+						# rather than passing a Headers wrapper object.
+						headers = [
+							[SCHEME, (request.scheme || HTTPS).to_s],
+							[METHOD, request.method.to_s],
 						]
 						
 						if path = request.path
-							pseudo_headers << [PATH, path]
+							headers << [PATH, path.to_s]
 						end
 						
 						if authority = request.authority || @peer.authority
-							pseudo_headers << [AUTHORITY, authority]
+							headers << [AUTHORITY, authority.to_s]
 						end
 						
 						if length = request.body&.length
-							pseudo_headers << [CONTENT_LENGTH, length]
+							headers << [CONTENT_LENGTH, length.to_s]
 						end
 						
-						::Protocol::HTTP::Headers::Merged.new(
-							pseudo_headers,
-							request.headers.header
-						)
+						request.headers.each do |name, value|
+							headers << [name.to_s, value.to_s]
+						end
+						
+						headers
 					end
 				end
 			end

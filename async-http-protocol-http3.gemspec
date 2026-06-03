@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
 		"funding_uri" => "https://github.com/sponsors/ioquatix",
 	}
 	
-	spec.files = Dir["{lib}/**/*", "*.md", base: __dir__]
+	spec.files = Dir["{examples,lib}/**/*", "*.md", base: __dir__]
 	spec.require_paths = ["lib"]
 	
 	spec.required_ruby_version = ">= 3.3"

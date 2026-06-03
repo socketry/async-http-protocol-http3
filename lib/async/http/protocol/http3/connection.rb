@@ -95,6 +95,12 @@ module Async
 						128
 					end
 					
+					# @returns [Integer] The number of active streams on this connection.
+					#   Required by the connection pool's usage accounting.
+					def count
+						0
+					end
+					
 					# @returns [Boolean] Whether the connection can currently be used.
 					def viable?
 						!closed?

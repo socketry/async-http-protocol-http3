@@ -32,6 +32,10 @@ module Async
 						@notification = Async::Notification.new
 						@exception = nil
 						@length = nil
+						
+						@pool = nil
+						@finished = false
+						@output = nil
 					end
 					
 					attr :request
@@ -47,9 +51,14 @@ module Async
 						@connection
 					end
 					
-					# Assign the connection pool. HTTP/3 pools retain the connection until closed.
+					# Assign the connection pool, releasing the connection back to the
+					# pool once the response stream has finished.
 					def pool=(pool)
-						@pool = pool
+						if @finished
+							pool.release(@connection)
+						else
+							@pool = pool
+						end
 					end
 					
 					# Wait for final response headers.
@@ -65,11 +74,10 @@ module Async
 					end
 					
 					# Finish the current response headers.
+					#
+					# @parameter is_final [Boolean] Whether the stream ends after these
+					#   headers (i.e. there is no response body).
 					def headers_finished(is_final)
-						unless is_final
-							return receive_interim_headers
-						end
-						
 						headers = @raw_headers
 						@raw_headers = []
 						
@@ -79,7 +87,16 @@ module Async
 							raise ::Protocol::HTTP::HeaderError, "Invalid response headers: #{headers.inspect}"
 						end
 						
-						@status = Integer(status_header.last)
+						status = Integer(status_header.last)
+						
+						# Interim (1xx) responses precede the final response and never
+						# carry a body. They are delivered as a separate header block.
+						if status >= 100 && status < 200
+							@request.send_interim_response(status, ::Protocol::HTTP::Headers[headers])
+							return
+						end
+						
+						@status = status
 						@headers = ::Protocol::HTTP::Headers.new
 						
 						headers.each do |key, value|
@@ -91,6 +108,10 @@ module Async
 						end
 						
 						@body = Input.new(@length)
+						
+						# If the stream is already finished (no body), close the read
+						# side immediately so consumers observe a complete empty body.
+						@body.close_write if is_final
 						
 						notify!
 					rescue => error
@@ -105,6 +126,7 @@ module Async
 					# Finish the response body.
 					def stream_finished
 						body&.close_write
+						release!
 					end
 					
 					# Close the response stream.
@@ -112,30 +134,34 @@ module Async
 						@exception ||= error
 						body&.close_write(error)
 						notify!
+						release!
 					end
 					
 					# Start writing the request body.
 					def write_request_body(body)
-						Output.new(@stream, body).start
+						@output = Output.new(@stream, body)
+						@output.start
 					end
 					
 					private
-					
-					def receive_interim_headers
-						headers = @raw_headers
-						@raw_headers = []
-						
-						status_header = headers.shift
-						
-						if status_header&.first == STATUS
-							@request.send_interim_response(Integer(status_header.last), ::Protocol::HTTP::Headers[headers])
-						end
-					end
 					
 					def notify!
 						if notification = @notification
 							@notification = nil
 							notification.signal
+						end
+					end
+					
+					# Release the underlying connection back to the pool exactly once.
+					def release!
+						return if @finished
+						@finished = true
+						
+						@output&.wait
+						
+						if pool = @pool
+							@pool = nil
+							pool.release(@connection)
 						end
 					end
 				end

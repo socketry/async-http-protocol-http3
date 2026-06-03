@@ -27,6 +27,7 @@ end
 
 group :test do
 	gem "sus"
+	gem "sus-fixtures-async"
 	gem "covered"
 	
 	gem "rubocop"
