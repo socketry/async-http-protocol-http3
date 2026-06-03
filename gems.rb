@@ -13,7 +13,11 @@ end
 
 if File.directory?("../protocol-http3")
 	gem "protocol-http3", path: "../protocol-http3"
+else
+	gem "protocol-http3", github: "socketry/protocol-http3"
 end
+
+gem "protocol-quic", github: "socketry/protocol-quic"
 
 group :maintenance, optional: true do
 	gem "bake-gem"
